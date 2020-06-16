@@ -50,6 +50,12 @@
 
 因为全卷积神经网络是应用于整个图像，在测试阶段不需要多次裁剪，因此提高了计算效率。同时，用大量的裁剪图像，可以提高准确率，as it results in a finer sampling of the input image compared to the fully-convolutional net。而且，multi-crop evaluation和dense evaluation是互补的due to different convolution boundry conditions：当一个ConvNet处理一个裁剪图像时，用卷积核卷积一个图像会用零填充。而在dense evaluation的情况下，对于同一裁剪图像，卷积核进行卷积时不再是填充零，而是填充neighbouring parts of an image，这样会大幅增加整个网络的receptive field，因此会获取更多的信息。我们也知道multiple crops的计算时间长和准确度的提高并没有多大关系。我们evaluate模型时，每个尺度scale用50张剪切图，三种尺度就是150张。。可以和Szegedy et al.(2014)文中的4种尺度144个剪切图相提并论。
 
+#### 3.3 Implementation Details
+我们的网络是用caffe框架来搭建的，但是会包含一些重要的更改。这样可以使得我们在多个GPU上进行训练和验证。用多个GPU训练使得数据可以并行处理。通过把一个batch的训练图像分成几个小batchs，一个GPU处理一个小batch。在GPU计算出batch gradients后，把每个GPU计算出的batch gradients求平均值，这个平均值即为整个大batch的梯度值。
+
+### 4 Classification Experiments
+
+
 
 
 
