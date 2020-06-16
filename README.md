@@ -39,6 +39,21 @@
 
 为了获取224 X 224的输入图像，需要对缩放后的输入图像进行随机裁剪。为了增强训练集，在裁剪的同时还要进行随机水平翻转以及随机RGB colour shift(Krizhevsky et al.2012)。下面介绍图像的缩放。
 
+设训练图像较小 的一边为S，输入神经网络的图像要经过裁剪得到。裁剪的尺寸是224 X 224.按理说，较小边S的值应该至少为224。如果S》224，那么会裁剪出图像的一部分。
+
+我们考虑了两种方法来设置the training scale S。第一种方法是single-scale training，即固定S。在我们的实验中，我们分别对S=256和S=384两种情况进行训练。S=256是很多人常用的。对于一个已经设置好参数的卷积神经网络，我们首先取S=256进行训练。在训练S=384时，为了提升训练速度，我们会用S=256时训练好的网络参数来初始化S=384的网络参数，并且初始的学习率取一个较小值10^-3。
+
+第二个方法是设置S为多个尺度multi-scale。也就是说，把训练图像随机缩放rescaled成Smin到Smax之间的任意S值(本文取256~512)。因为图像中的对象大小不同，这种方法就是把该因素考虑进去了。另外，这种方法也可以看作图像增强。这种方法可以训练模型来识别物体的不同scales。为了提高训练速度，我们在S=384的预训练好的具有同样参数设置的单尺度模型上微调所有的层。
+
+#### 3.2 测试Testing
+测试时，给定一个训练好的卷积神经网络和一个输入图像，用以下方式进行分类。首先把图像进行缩放，缩放后的最小边的大小是Q。注意，Q不一定要等于训练集的缩放值S。把缩放后的测试图像进行传入网络(Sermanet et al,.2014)。也就是说，首先把全连接转换成卷积层（第一个全连接层转换成包含7X7卷积核的卷积层，后两个全连接层转换从包含1X1卷积核的卷积层）。这就变成了一个全卷积神经网络。这样一个全卷积神经网络可以处理整幅图像，无需裁剪。网络会输出两种结果，一个是a class score map with the number of channels equal to the number of classes，另一个是spatial resolution，其size取决于输入图像的size。 最后，为了得到一个固定长度的向量表示输入图像在各个类别的得分，the class core map is spatially averaged。我们也水平翻转测试图像来增强测试集，并且会把翻转前和翻转后的结果通过平均获取最后的分数。
+
+因为全卷积神经网络是应用于整个图像，在测试阶段不需要多次裁剪，因此提高了计算效率。同时，用大量的裁剪图像，可以提高准确率，as it results in a finer sampling of the input image compared to the fully-convolutional net。而且，multi-crop evaluation和dense evaluation是互补的due to different convolution boundry conditions：当一个ConvNet处理一个裁剪图像时，用卷积核卷积一个图像会用零填充。而在dense evaluation的情况下，对于同一裁剪图像，卷积核进行卷积时不再是填充零，而是填充neighbouring parts of an image，这样会大幅增加整个网络的receptive field，因此会获取更多的信息。我们也知道multiple crops的计算时间长和准确度的提高并没有多大关系。我们evaluate模型时，每个尺度scale用50张剪切图，三种尺度就是150张。。可以和Szegedy et al.(2014)文中的4种尺度144个剪切图相提并论。
+
+
+
+
+
 
 
 
