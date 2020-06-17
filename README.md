@@ -54,8 +54,22 @@
 我们的网络是用caffe框架来搭建的，但是会包含一些重要的更改。这样可以使得我们在多个GPU上进行训练和验证。用多个GPU训练使得数据可以并行处理。通过把一个batch的训练图像分成几个小batchs，一个GPU处理一个小batch。在GPU计算出batch gradients后，把每个GPU计算出的batch gradients求平均值，这个平均值即为整个大batch的梯度值。
 
 ### 4 Classification Experiments
+我们在ILSVRC-2012数据集上训练了我们的网络。该数据集包括1000种图像，并且被分成三个子数据集：训练数据集（1.3M images），验证集（50K images），测试集（100K images包含分类标签）。有两种性能测量标准：top-1 error 和 top-5 error。top-1 error是multi-class classification error。top-5 error主要用于ILSVRC竞赛中，是指实际分类不在前五名预测值之内。
 
+大部分实验，我们用验证集当作测试集。作为VGG团队，要参加ILSVRC-2014竞赛，需要提交结果到ILSVRC服务器时，此时会用到测试集。
 
+#### 4.1 Single Scale Evaluation
+我们用单尺度图像评估每个模型的性能。测试图像的尺寸是这样设置的：(训练图像较小边为S，测试图像较小边为Q)如果S是固定值则Q=S，如果S是在Smin到Smax范围之间，那么Q就取Smin和Smax之间的中间值。评估结果如表3所示。
+[表3](https://github.com/May522/translation-vgg/blob/master/%E6%8D%95%E8%8E%B72.JPG)
+[表3](./捕获2.JPG)
+首先，我们发现，对网络A添加了local response normalization(LRN)并不能改善模型的性能。因此在B~E深度框架中我们没有引入normalization。
+
+第二，我们发现随着网络的深度增加classification error在减小。网络C和网络D虽然都有相同的深度16层，但网络D比网络C表现好，其中网络C包含三个1 X 1 conv layers，而网络D用的是三个3 X 3的卷积核。这表明，尽管非线性可以改善网络性能（网络C比网络B表现好），但相比之下通过卷积核获取空间纹理更重要。随着网络深度的增加，当深度到达19层时网络的错误率error rate会达到饱和。如果数据集更大，最终达到饱和的层数可能会更大。另外，我们比较了网络B和一个包含5个5 X 5的卷积层的较浅的网络。该网络是从网络B变化过来的，即把两个3 X 3的卷积层替换为一个5 X 5卷积层。结果发现较浅网络的top-1 error比网络B增加了7%，这表明拥有更小卷积核的深度网络比相应的浅网络表现更好。
+
+最后，在训练时间拥有不定尺度scale(S:[256,512])比固定尺度scale(S=256,或者，S=384)的网络性能表现更好，即便在测试时期用的是固定尺度。这证明了不定尺度对训练数据的增强具有很大帮助。
+
+#### 4.2 Multi-Scale Evaluation
+在单个尺度上评估了ConvNet模型后，接下来在多尺度上进行测试。把同一测试图像的不同尺度版本输入模型，将输出的结果进行平均。考虑到如果训练图像和测试图像的尺度相差太多会导致性能下降，用固定尺度S训练的模型会用测试图像的三种尺寸来进行评估evaluate，即Q={S-32，S，S+32}。同时，如果在训练阶段的尺度处于某个范围[Smin,Smax]，那么评估阶段会用一个比Q={Smin,0.5(Smin+Smax),Smax}更大的尺度范围。
 
 
 
