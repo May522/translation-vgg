@@ -63,16 +63,16 @@ Since the fully-convolutional network is applied over the whole image, there is 
 大部分实验，我们用验证集当作测试集。作为VGG团队，要参加ILSVRC-2014竞赛，需要把结果提交到ILSVRC服务器，此时会用到测试集。
 
 #### 4.1 Single Scale Evaluation
-我们用单尺度图像评估每个模型的性能。测试图像的尺寸是这样设置的：(训练图像较小边为S，测试图像较小边为Q)如果S是固定值则Q=S，如果S是在Smin到Smax范围之间，那么Q就取Smin和Smax之间的中间值。评估结果如表3所示。
+我们用单尺度图像评估每个模型的性能。测试图像的尺寸是这样设置的：(训练图像较小边为S，测试图像较小边为Q)如果训练时的尺度S是固定值，则测试时Q=S，如果S是在Smin到Smax范围之间，那么Q就取Smin和Smax之间的中间值。评估结果如表3所示。
 ![表3](./捕获2.JPG)
-首先，我们发现，对网络A添加了local response normalization(LRN)并不能改善模型的性能。因此在B~E深度框架中我们没有引入normalization。
+第一，我们发现，对网络A添加了local response normalization(LRN)并不能改善模型的性能。因此在B~E深度框架中我们没有引入normalization。
 
-第二，我们发现随着网络的深度增加classification error在减小。网络C和网络D虽然都有相同的深度16层，但网络D比网络C表现好，其中网络C包含三个1 X 1 conv layers，而网络D用的是三个3 X 3的卷积核。这表明，尽管非线性可以改善网络性能（网络C比网络B表现好），但相比之下通过卷积核获取空间纹理更重要。随着网络深度的增加，当深度到达19层时网络的错误率error rate会达到饱和。如果数据集更大，最终达到饱和的层数可能会更大。另外，我们比较了网络B和一个包含5个5 X 5的卷积层的较浅的网络。该网络是从网络B变化过来的，即把两个3 X 3的卷积层替换为一个5 X 5卷积层。结果发现较浅网络的top-1 error比网络B增加了7%，这表明拥有更小卷积核的深度网络比相应的浅网络表现更好。
+第二，我们发现随着网络的深度增加，classification error在减小。网络C和网络D虽然都有相同的深度16层，但网络D比网络C表现好。原因是网络C包含三个1 X 1 conv layers，而网络D用的是三个3 X 3的卷积核。这表明，尽管非线性可以改善网络性能（网络C比网络B表现好），但相比之下通过卷积核获取空间纹理更重要。随着网络深度的增加，当深度达到19层时网络的错误率error rate会达到饱和。如果数据集更大，最终达到饱和的层数可能会更大。另外，我们比较了网络B和一个包含5个5 X 5的卷积层的较浅的网络。该网络是从网络B变化过来的，即把两个3 X 3的卷积层替换为一个5 X 5卷积层。结果发现较浅网络的top-1 error比网络B增加了7%，这表明拥有更小卷积核的深度网络比相应的浅网络表现更好。
 
-最后，在训练时间拥有不定尺度scale(S:[256,512])比固定尺度scale(S=256,或者，S=384)的网络性能表现更好，即便在测试时期用的是固定尺度。这证明了不定尺度对训练数据的增强具有很大帮助。
+最后，在训练时间拥有不定尺度scale(S:[256,512])比固定尺度scale(S=256,或者，S=384)的网络性能表现更好，即便在测试时期用的是固定尺度。这证明了不定尺度scale jittering对训练数据的增强具有很大帮助。
 
 #### 4.2 Multi-Scale Evaluation
-在单个尺度上评估了ConvNet模型后，接下来在多尺度上进行测试。把同一测试图像的不同尺度版本输入模型，将输出的结果进行平均。考虑到如果训练图像和测试图像的尺度相差太多会导致性能下降，用固定尺度S训练的模型会用测试图像的三种尺寸来进行评估evaluate，即Q={S-32，S，S+32}。同时，如果在训练阶段的尺度处于某个范围[Smin,Smax]，那么评估阶段会用一个比Q={Smin,0.5(Smin+Smax),Smax}更大的尺度范围。
+在单个尺度a single scale上评估了ConvNet模型后，接下来在多尺度scale jittering上进行测试。把同一测试图像转换成不同尺度，然后输入模型，将输出的结果进行平均。考虑到如果训练图像和测试图像的尺度相差太多会导致性能下降，用固定尺度S训练的模型会用测试图像的三种尺寸来进行评估evaluate，即Q={S-32，S，S+32}。同时，如果在训练阶段的图像尺度处于某个范围[Smin,Smax]，那么评估阶段会用一个比Q={Smin,0.5(Smin+Smax),Smax}更大的尺度范围。
 
 从表4的测试结果来看，相比训练阶段采用固定的尺度a single scale,采用动态的尺度scale jittering使得网络的性能更好。总的来说，网络越深，性能越好。动态的尺度scale jittering比固定的尺度fixed scale表现更好。
 ![表4](./捕获3.JPG)
@@ -82,7 +82,7 @@ Since the fully-convolutional network is applied over the whole image, there is 
 ![表5](./捕获4.JPG)
 
 #### 4.4 ConvNet Fusion结合
-到目前为止，我们评估了每一个模型的性能。这一部分的实验是结合多个模型的表现来获取输出by averaging their soft-max class posteriors。因为各个模型都是互补的complementary，因此多个模型结合在一起可以得到更准确的输出结果。这种结合方法在ILSVRC-2012和ILSVRC-2013表现最好的模型中都被用到(Krizhevsky et al.,2012)(Zeiler & Fergus,2013; Sermanet et al.,2014)。
+到目前为止，我们评估了每一个模型的性能。接下来我们结合多个模型的表现，来获取输出by averaging their soft-max class posteriors。因为各个模型都是互补的complementary，因此多个模型结合在一起可以得到更准确的输出结果。这种结合方法在ILSVRC-2012和ILSVRC-2013竞赛中表现最好的模型中都被用到(Krizhevsky et al.,2012)(Zeiler & Fergus,2013; Sermanet et al.,2014)。
 
 本实验进行的各种模型的结合结果展示在表6中。在ILSVRC竞赛提交之前我们已经对所有网络进行了单尺度训练，以及对网络D进行了多尺度multi-scale训练（只是微调全连接层而不是所有层）。我们结合了训练好的7个模型得到7.3%的test error。（表现最好的一个模型的test error是7.1%）。在提交之后，我们结合了两个表现最好的multi-scale 模型D和E，test error降低到7.0%(dense evaluation)和6.8%(combine dense and multi-crop evaluation)。
 ![表6](./捕获5.JPG)
@@ -90,11 +90,11 @@ Since the fully-convolutional network is applied over the whole image, there is 
 #### 4.5 Comparison With The State Of The Art
 在表7中，我们比较了多种表现好的网络的性能。在ILSVRC-2014竞赛中，我们的VGG团队获取了第二名，即结合7个模型得到7.3% test error。在提交之后，我们尝试结合两个表现最优的模型，把test error降低到了6.8% 。
 
-从表7可以看出，我们的深度模型比其他在竞赛中获胜的模型的表现好很多。而且，我们的模型表现仅次于GoogleLeNet 6.7%的error 。去年ILSVRC-2013竞赛获奖的模型的验证error是11.2%，相比之下，我们的模型要优秀很多。如果仅比较单个模型的性能，我们的单个模型表现比GoogleLeNet胜出0.9%。需要提出的是，我们的模型是在classical ConvNet architecture of LeCun et al.(1989)的基础上通过增加深度进行改进的，也就是说，我们遵循了LeCun的框架设计思想的同时，增加了深度。
+从表7可以看出，我们的深度模型比其他在竞赛中获胜的模型的表现好很多。而且，我们的模型表现仅次于GoogleLeNet 6.7%的error 。去年ILSVRC-2013竞赛获奖的模型的验证error是11.2%，相比之下，我们的模型要优秀很多。如果仅比较单个模型的性能，我们的单个模型表现比GoogleLeNet胜出0.9%。需要提出的是，我们的模型是在classical ConvNet architecture of LeCun et al.(1989)的基础上通过增加深度进行改进的，也就是说，我们遵循了LeCun的框架设计思想，在此基础上增加了网络的深度。
 ![表7](./捕获6.JPG)
 
 ### 5 Conclusion
-本文，我们展示了深度模型（多达19层）在大规模图像分类large-scale image classification中的表现，表明增加深度可以提高模型的性能。而且，我们采用的是传统的卷积网络框架(LeCun et al,1989; Krizhevsky at al,2012)，在他们的基础上增加深度。这种深度模型不仅在本文的ILSVRC数据集中表现好，另外，在附录中我们展示了这种深度模型在其他数据集上表现依然很好，与那些结构复杂网络较浅的模型相比，性能相当甚至更好。
+本文，我们展示了深度模型（多达19层）在大规模图像分类large-scale image classification中的表现，表明增加深度可以提高模型的性能。而且，我们采用的是传统的卷积网络框架(LeCun et al,1989; Krizhevsky at al,2012)，在他们的基础上增加网络深度。这种深度模型不仅在本文的ILSVRC数据集中表现好，另外，在附录中我们展示了这种深度模型在其他数据集上表现依然很好，与那些结构复杂网络较浅的模型相比，性能旗鼓相当，甚至更好。
 
 
 
