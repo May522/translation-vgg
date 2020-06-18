@@ -78,7 +78,16 @@
 在表5中，我们对比了dense ConvNet 验证和multi-crop 验证，以及两种方法的结合验证。从结果可以看出，multi-crop 验证比dense ConvNet 验证性能稍微好一点。两种方法的结合却比这两种方法表现都好，这说明这两种方法是互补的complementary。
 ![表5](./捕获4.JPG)
 
-#### 4.4 ConvNet Fusion
+#### 4.4 ConvNet Fusion结合
+到目前为止，我们评估了每一个模型的性能。这一部分的实验是结合多个模型的表现来获取输出by averaging their soft-max class posteriors。因为各个模型都是互补的complementary，因此多个模型结合在一起可以得到更准确的输出结果。这种结合方法在ILSVRC-2012和ILSVRC-2013表现最好的模型中都被用到(Krizhevsky et al.,2012)(Zeiler & Fergus,2013; Sermanet et al.,2014)。
+
+本实验进行的各种模型的结合结果展示在表6中。在ILSVRC竞赛提交之前我们已经对所有网络进行了单尺度训练，以及对网络D进行了多尺度multi-scale训练（只是微调全连接层而不是所有层）。我们结合了训练好的7个模型得到7.3%的test error。（表现最好的一个模型的test error是7.1%）。在提交之后，我们结合了两个表现最好的multi-scale 模型D和E，test error降低到7.0%(dense evaluation)和6.8%(combine dense and multi-crop evaluation)。
+
+#### 4.5 Comparison With The State Of The Art
+在表7中，我们比较了多种表现好的网络的性能。在ILSVRC-2014竞赛中，我们的VGG团队获取了第二名，即结合7个模型得到7.3% test error。在提交之后，我们尝试结合两个表现最优的模型，把test error降低到了6.8% 。
+
+从表7可以看出，我们的深度模型比其他在竞赛中获胜的模型的表现好很多。而且，我们的模型表现仅次于GoogleLeNet 6.7%的error 。去年ILSVRC-2013竞赛获奖的模型的验证error是11.2%，相比之下，我们的模型要优秀很多。如果仅比较单个模型的性能，我们的单个模型表现比GoogleLeNet胜出0.9%。需要提出的是，我们的模型是在classical ConvNet architecture of LeCun et al.(1989)的基础上通过增加深度进行改进的，也就是说，我们遵循了LeCun的框架设计思想的同时，增加了深度。
+![表7](./捕获6.JPG)
 
 
 
